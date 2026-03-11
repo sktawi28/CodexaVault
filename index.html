@@ -231,27 +231,11 @@
     </div>
 
     <script>
-        // Initial Mock Data
-        let snippets = [
-            {
-                id: '1',
-                title: 'زر إرسال نيون',
-                category: 'buttons',
-                desc: 'زر بتأثير توهج أزرق عند التمرير',
-                content: '<button style="background: #2563eb; color: white; padding: 12px 24px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; box-shadow: 0 0 15px rgba(37, 99, 235, 0.4); transition: all 0.3s;" onmouseover="this.style.boxShadow=\'0 0 25px rgba(37, 99, 235, 0.8)\'; this.style.transform=\'scale(1.05)\'" onmouseout="this.style.boxShadow=\'0 0 15px rgba(37, 99, 235, 0.4)\'; this.style.transform=\'scale(1)\'">إرسال الآن</button>',
-                favorite: true,
-                date: Date.now()
-            },
-            {
-                id: '2',
-                title: 'أيقونة مستخدم SVG',
-                category: 'svg',
-                desc: 'أيقونة بسيطة للملف الشخصي',
-                content: '<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>',
-                favorite: false,
-                date: Date.now() - 10000
-            }
-        ];
+        // Storage Keys
+        const STORAGE_KEY = 'smart_code_manager_data';
+
+        // Initial Data
+        let snippets = [];
 
         let currentCategory = 'all';
         let currentSearch = '';
@@ -265,13 +249,49 @@
 
         // Functions
         function init() {
+            loadFromStorage();
             renderSnippets();
             updateStats();
         }
 
+        function loadFromStorage() {
+            const savedData = localStorage.getItem(STORAGE_KEY);
+            if (savedData) {
+                snippets = JSON.parse(savedData);
+            } else {
+                // Default data for new users
+                snippets = [
+                    {
+                        id: '1',
+                        title: 'زر إرسال نيون',
+                        category: 'buttons',
+                        desc: 'زر بتأثير توهج أزرق عند التمرير',
+                        content: '<button style="background: #2563eb; color: white; padding: 12px 24px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; box-shadow: 0 0 15px rgba(37, 99, 235, 0.4); transition: all 0.3s;" onmouseover="this.style.boxShadow=\'0 0 25px rgba(37, 99, 235, 0.8)\'; this.style.transform=\'scale(1.05)\'" onmouseout="this.style.boxShadow=\'0 0 15px rgba(37, 99, 235, 0.4)\'; this.style.transform=\'scale(1)\'">إرسال الآن</button>',
+                        favorite: true,
+                        date: Date.now()
+                    },
+                    {
+                        id: '2',
+                        title: 'أيقونة مستخدم SVG',
+                        category: 'svg',
+                        desc: 'أيقونة بسيطة للملف الشخصي',
+                        content: '<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>',
+                        favorite: false,
+                        date: Date.now() - 10000
+                    }
+                ];
+                saveToStorage();
+            }
+        }
+
+        function saveToStorage() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(snippets));
+        }
+
         function renderSnippets() {
             const filtered = snippets.filter(s => {
-                const matchesSearch = s.title.includes(currentSearch) || s.desc.includes(currentSearch);
+                const matchesSearch = s.title.toLowerCase().includes(currentSearch.toLowerCase()) || 
+                                      s.desc.toLowerCase().includes(currentSearch.toLowerCase());
                 const matchesCat = currentCategory === 'all' || 
                                   (currentCategory === 'fav' ? s.favorite : s.category === currentCategory);
                 return matchesSearch && matchesCat;
@@ -410,6 +430,7 @@
                 showToast('تمت إضافة الكود لمكتبتك');
             }
 
+            saveToStorage();
             closeModal();
             renderSnippets();
             updateStats();
@@ -418,6 +439,7 @@
         function deleteSnippet(id) {
             if (confirm('هل أنت متأكد من حذف هذا الكود؟')) {
                 snippets = snippets.filter(s => s.id !== id);
+                saveToStorage();
                 renderSnippets();
                 updateStats();
                 showToast('تم حذف الكود');
@@ -428,6 +450,7 @@
             const s = snippets.find(x => x.id === id);
             if (s) {
                 s.favorite = !s.favorite;
+                saveToStorage();
                 renderSnippets();
                 updateStats();
             }

@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مدير الأكواد الذكي | Smart Code Manager</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Tajawal', sans-serif;
+        }
+        .code-preview-container {
+            background-image: radial-gradient(#e5e7eb 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 10px;
+        }
+        .modal-overlay {
+            background-color: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-900 min-h-screen">
+
+    <!-- Header -->
+    <header class="sticky top-0 z-40 w-full bg-white border-b border-gray-200 shadow-sm">
+        <div class="container mx-auto px-4 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+                <div class="bg-blue-600 p-2 rounded-lg text-white">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
+                </div>
+                <h1 class="text-xl font-bold tracking-tight">مدير الأكواد <span class="text-blue-600">الذكي</span></h1>
+            </div>
+
+            <div class="flex items-center gap-3">
+                <button onclick="openModal('add')" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2 transition-all shadow-md active:scale-95">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                    <span>كود جديد</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 py-8 flex flex-col md:flex-row gap-8">
+        <!-- Sidebar -->
+        <aside class="w-full md:w-64 flex-shrink-0">
+            <div class="sticky top-24 space-y-6">
+                <!-- Search -->
+                <div class="relative">
+                    <input type="text" id="searchInput" placeholder="بحث عن كود..." class="w-full bg-white border border-gray-200 rounded-xl px-10 py-2.5 focus:ring-2 focus:ring-blue-500 outline-none transition-all">
+                    <svg class="absolute right-3 top-3 text-gray-400" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                </div>
+
+                <!-- Categories -->
+                <div>
+                    <h3 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3 px-2">التصنيفات</h3>
+                    <nav class="space-y-1">
+                        <button onclick="filterByCategory('all')" class="w-full flex items-center justify-between px-3 py-2 rounded-lg bg-blue-50 text-blue-600 font-medium category-btn active-cat" id="cat-all">
+                            <span class="flex items-center gap-3">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                                الكل
+                            </span>
+                            <span class="text-xs bg-blue-100 px-2 py-0.5 rounded-full" id="count-all">0</span>
+                        </button>
+                        <button onclick="filterByCategory('buttons')" class="w-full flex items-center justify-between px-3 py-2 rounded-lg hover:bg-gray-100 text-gray-600 category-btn" id="cat-buttons">
+                            <span class="flex items-center gap-3">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"></rect><path d="M6 12h.01"></path><path d="M10 12h.01"></path></svg>
+                                أزرار
+                            </span>
+                            <span class="text-xs bg-gray-200 px-2 py-0.5 rounded-full" id="count-buttons">0</span>
+                        </button>
+                        <button onclick="filterByCategory('forms')" class="w-full flex items-center justify-between px-3 py-2 rounded-lg hover:bg-gray-100 text-gray-600 category-btn" id="cat-forms">
+                            <span class="flex items-center gap-3">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></line></svg>
+                                نماذج
+                            </span>
+                            <span class="text-xs bg-gray-200 px-2 py-0.5 rounded-full" id="count-forms">0</span>
+                        </button>
+                        <button onclick="filterByCategory('svg')" class="w-full flex items-center justify-between px-3 py-2 rounded-lg hover:bg-gray-100 text-gray-600 category-btn" id="cat-svg">
+                            <span class="flex items-center gap-3">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19l7-7 3 3-7 7-3-3z"></path><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"></path><path d="M2 2l7.5 1.5"></path><path d="M14 14l5 5"></path></svg>
+                                أيقونات SVG
+                            </span>
+                            <span class="text-xs bg-gray-200 px-2 py-0.5 rounded-full" id="count-svg">0</span>
+                        </button>
+                        <button onclick="filterByCategory('links')" class="w-full flex items-center justify-between px-3 py-2 rounded-lg hover:bg-gray-100 text-gray-600 category-btn" id="cat-links">
+                            <span class="flex items-center gap-3">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+                                روابط أدوات
+                            </span>
+                            <span class="text-xs bg-gray-200 px-2 py-0.5 rounded-full" id="count-links">0</span>
+                        </button>
+                        <button onclick="filterByCategory('fav')" class="w-full flex items-center justify-between px-3 py-2 rounded-lg hover:bg-gray-100 text-gray-600 category-btn" id="cat-fav">
+                            <span class="flex items-center gap-3">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>
+                                المفضلة
+                            </span>
+                            <span class="text-xs bg-gray-200 px-2 py-0.5 rounded-full" id="count-fav">0</span>
+                        </button>
+                    </nav>
+                </div>
+
+                <!-- Status Card -->
+                <div class="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-2xl p-5 text-white shadow-lg overflow-hidden relative">
+                    <div class="relative z-10">
+                        <p class="text-blue-100 text-sm mb-1">الإنتاجية اليوم</p>
+                        <h4 class="text-2xl font-bold">مكتبتك جاهزة</h4>
+                        <div class="mt-4 flex items-center gap-2">
+                            <div class="h-1.5 flex-1 bg-white/20 rounded-full overflow-hidden">
+                                <div class="h-full bg-white w-2/3 rounded-full"></div>
+                            </div>
+                            <span class="text-xs font-medium">65%</span>
+                        </div>
+                    </div>
+                    <svg class="absolute -bottom-6 -left-6 text-white/10" width="120" height="120" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path></svg>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Content Area -->
+        <div class="flex-1">
+            <div id="noData" class="hidden flex flex-col items-center justify-center py-20 text-center">
+                <div class="bg-gray-100 p-6 rounded-full mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="text-gray-400"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+                </div>
+                <h3 class="text-xl font-bold mb-1">لا يوجد أكواد هنا</h3>
+                <p class="text-gray-500">ابدأ بإضافة أول كود لمكتبتك الشخصية الآن.</p>
+                <button onclick="openModal('add')" class="mt-6 text-blue-600 font-medium hover:underline">أضف كود جديد</button>
+            </div>
+
+            <div id="snippetGrid" class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                <!-- Snippets will be injected here -->
+            </div>
+        </div>
+    </main>
+
+    <!-- Notification -->
+    <div id="toast" class="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 bg-gray-900 text-white px-6 py-3 rounded-xl shadow-2xl flex items-center gap-3 transform translate-y-20 transition-transform duration-300">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-green-400"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+        <span id="toastMsg">تم النسخ بنجاح!</span>
+    </div>
+
+    <!-- Modal: Add/Edit -->
+    <div id="codeModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4">
+        <div class="modal-overlay absolute inset-0" onclick="closeModal()"></div>
+        <div class="bg-white w-full max-w-2xl rounded-2xl shadow-2xl relative z-10 overflow-hidden flex flex-col max-h-[90vh]">
+            <div class="p-6 border-b border-gray-100 flex items-center justify-between">
+                <h2 id="modalTitle" class="text-xl font-bold">إضافة كود جديد</h2>
+                <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            </div>
+            
+            <form id="codeForm" class="p-6 overflow-y-auto custom-scrollbar space-y-4">
+                <input type="hidden" id="editId">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="space-y-1">
+                        <label class="text-sm font-medium text-gray-700">عنوان الكود</label>
+                        <input type="text" id="codeTitle" required placeholder="مثلاً: زر إرسال مموج" class="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none">
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-sm font-medium text-gray-700">التصنيف</label>
+                        <select id="codeCategory" class="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none">
+                            <option value="buttons">أزرار</option>
+                            <option value="forms">نماذج</option>
+                            <option value="svg">أيقونات SVG</option>
+                            <option value="links">روابط أدوات</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="space-y-1">
+                    <label class="text-sm font-medium text-gray-700">وصف قصير</label>
+                    <input type="text" id="codeDesc" placeholder="وصف لمكان استخدام هذا الكود..." class="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none">
+                </div>
+
+                <div class="space-y-1">
+                    <label class="text-sm font-medium text-gray-700">محتوى الكود (HTML / SVG)</label>
+                    <textarea id="codeContent" required rows="8" placeholder="الصق الكود هنا..." class="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 font-mono text-sm focus:ring-2 focus:ring-blue-500 outline-none custom-scrollbar" dir="ltr"></textarea>
+                </div>
+
+                <div class="flex items-center gap-2 pt-2">
+                    <input type="checkbox" id="codeFav" class="w-4 h-4 text-blue-600 rounded focus:ring-blue-500">
+                    <label for="codeFav" class="text-sm font-medium text-gray-700 cursor-pointer">إضافة للمفضلة</label>
+                </div>
+
+                <div class="flex gap-3 pt-4">
+                    <button type="submit" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-xl shadow-lg transition-all active:scale-95">حفظ الكود</button>
+                    <button type="button" onclick="closeModal()" class="flex-1 bg-gray-100 hover:bg-gray-200 font-bold py-2.5 rounded-xl transition-all">إلغاء</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Preview -->
+    <div id="previewModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4">
+        <div class="modal-overlay absolute inset-0" onclick="closePreview()"></div>
+        <div class="bg-white w-full max-w-4xl rounded-2xl shadow-2xl relative z-10 overflow-hidden flex flex-col h-[80vh]">
+            <div class="p-6 border-b border-gray-100 flex items-center justify-between bg-gray-50">
+                <div class="flex items-center gap-3">
+                    <span class="p-2 bg-blue-100 text-blue-600 rounded-lg">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                    </span>
+                    <h2 id="previewTitle" class="text-xl font-bold">معاينة الكود</h2>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button onclick="copyCurrentPreview()" class="p-2 text-gray-500 hover:text-blue-600 transition-colors" title="نسخ الكود">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                    </button>
+                    <button onclick="closePreview()" class="p-2 text-gray-400 hover:text-gray-600">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                    </button>
+                </div>
+            </div>
+            <div class="flex-1 p-8 code-preview-container overflow-auto flex items-center justify-center">
+                <div id="previewFrame" class="w-full h-full flex items-center justify-center">
+                    <!-- Preview content injected here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initial Mock Data
+        let snippets = [
+            {
+                id: '1',
+                title: 'زر إرسال نيون',
+                category: 'buttons',
+                desc: 'زر بتأثير توهج أزرق عند التمرير',
+                content: '<button style="background: #2563eb; color: white; padding: 12px 24px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; box-shadow: 0 0 15px rgba(37, 99, 235, 0.4); transition: all 0.3s;" onmouseover="this.style.boxShadow=\'0 0 25px rgba(37, 99, 235, 0.8)\'; this.style.transform=\'scale(1.05)\'" onmouseout="this.style.boxShadow=\'0 0 15px rgba(37, 99, 235, 0.4)\'; this.style.transform=\'scale(1)\'">إرسال الآن</button>',
+                favorite: true,
+                date: Date.now()
+            },
+            {
+                id: '2',
+                title: 'أيقونة مستخدم SVG',
+                category: 'svg',
+                desc: 'أيقونة بسيطة للملف الشخصي',
+                content: '<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>',
+                favorite: false,
+                date: Date.now() - 10000
+            }
+        ];
+
+        let currentCategory = 'all';
+        let currentSearch = '';
+        let currentPreviewCode = '';
+
+        // DOM Elements
+        const snippetGrid = document.getElementById('snippetGrid');
+        const noData = document.getElementById('noData');
+        const searchInput = document.getElementById('searchInput');
+        const codeForm = document.getElementById('codeForm');
+
+        // Functions
+        function init() {
+            renderSnippets();
+            updateStats();
+        }
+
+        function renderSnippets() {
+            const filtered = snippets.filter(s => {
+                const matchesSearch = s.title.includes(currentSearch) || s.desc.includes(currentSearch);
+                const matchesCat = currentCategory === 'all' || 
+                                  (currentCategory === 'fav' ? s.favorite : s.category === currentCategory);
+                return matchesSearch && matchesCat;
+            }).sort((a, b) => b.date - a.date);
+
+            if (filtered.length === 0) {
+                snippetGrid.innerHTML = '';
+                noData.classList.remove('hidden');
+            } else {
+                noData.classList.add('hidden');
+                snippetGrid.innerHTML = filtered.map(s => `
+                    <div class="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm hover:shadow-md transition-all group">
+                        <div class="p-5">
+                            <div class="flex justify-between items-start mb-3">
+                                <span class="text-xs font-bold uppercase px-2 py-1 rounded bg-gray-100 text-gray-500">
+                                    ${getCategoryName(s.category)}
+                                </span>
+                                <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <button onclick="toggleFavorite('${s.id}')" class="p-1.5 rounded-lg hover:bg-gray-100 ${s.favorite ? 'text-yellow-500' : 'text-gray-400'}">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="${s.favorite ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>
+                                    </button>
+                                    <button onclick="openModal('edit', '${s.id}')" class="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-blue-500">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                                    </button>
+                                    <button onclick="deleteSnippet('${s.id}')" class="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-red-500">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                                    </button>
+                                </div>
+                            </div>
+                            <h4 class="font-bold text-lg mb-1">${s.title}</h4>
+                            <p class="text-gray-500 text-sm mb-4 line-clamp-1">${s.desc || 'لا يوجد وصف'}</p>
+                            
+                            <div class="flex gap-2">
+                                <button onclick="openPreview('${s.id}')" class="flex-1 bg-gray-50 hover:bg-blue-50 text-blue-600 py-2 rounded-lg text-sm font-medium transition-colors border border-transparent hover:border-blue-200">
+                                    معاينة
+                                </button>
+                                <button onclick="copyCode(\`${encodeURIComponent(s.content)}\`)" class="flex items-center justify-center gap-2 px-4 bg-gray-50 hover:bg-gray-100 text-gray-700 py-2 rounded-lg text-sm font-medium transition-colors border border-transparent">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                                    نسخ
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            }
+        }
+
+        function getCategoryName(cat) {
+            const names = {
+                buttons: 'أزرار',
+                forms: 'نماذج',
+                svg: 'أيقونات SVG',
+                links: 'روابط'
+            };
+            return names[cat] || cat;
+        }
+
+        function updateStats() {
+            document.getElementById('count-all').innerText = snippets.length;
+            document.getElementById('count-buttons').innerText = snippets.filter(s => s.category === 'buttons').length;
+            document.getElementById('count-forms').innerText = snippets.filter(s => s.category === 'forms').length;
+            document.getElementById('count-svg').innerText = snippets.filter(s => s.category === 'svg').length;
+            document.getElementById('count-links').innerText = snippets.filter(s => s.category === 'links').length;
+            document.getElementById('count-fav').innerText = snippets.filter(s => s.favorite).length;
+        }
+
+        function filterByCategory(cat) {
+            currentCategory = cat;
+            document.querySelectorAll('.category-btn').forEach(btn => {
+                btn.classList.remove('bg-blue-50', 'text-blue-600', 'active-cat');
+                btn.classList.add('hover:bg-gray-100', 'text-gray-600');
+            });
+            
+            const activeBtn = document.getElementById(`cat-${cat}`);
+            activeBtn.classList.remove('hover:bg-gray-100', 'text-gray-600');
+            activeBtn.classList.add('bg-blue-50', 'text-blue-600', 'active-cat');
+            
+            renderSnippets();
+        }
+
+        searchInput.addEventListener('input', (e) => {
+            currentSearch = e.target.value;
+            renderSnippets();
+        });
+
+        // Modal Handlers
+        function openModal(mode, id = null) {
+            const modal = document.getElementById('codeModal');
+            const title = document.getElementById('modalTitle');
+            const editId = document.getElementById('editId');
+            
+            codeForm.reset();
+            modal.classList.remove('hidden');
+
+            if (mode === 'edit' && id) {
+                const s = snippets.find(x => x.id === id);
+                if (s) {
+                    title.innerText = 'تعديل الكود';
+                    editId.value = s.id;
+                    document.getElementById('codeTitle').value = s.title;
+                    document.getElementById('codeCategory').value = s.category;
+                    document.getElementById('codeDesc').value = s.desc;
+                    document.getElementById('codeContent').value = s.content;
+                    document.getElementById('codeFav').checked = s.favorite;
+                }
+            } else {
+                title.innerText = 'إضافة كود جديد';
+                editId.value = '';
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('codeModal').classList.add('hidden');
+        }
+
+        codeForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const id = document.getElementById('editId').value;
+            const data = {
+                title: document.getElementById('codeTitle').value,
+                category: document.getElementById('codeCategory').value,
+                desc: document.getElementById('codeDesc').value,
+                content: document.getElementById('codeContent').value,
+                favorite: document.getElementById('codeFav').checked,
+                date: Date.now()
+            };
+
+            if (id) {
+                // Update
+                const index = snippets.findIndex(s => s.id === id);
+                snippets[index] = { ...snippets[index], ...data };
+                showToast('تم تحديث الكود بنجاح');
+            } else {
+                // Add
+                snippets.push({ id: Date.now().toString(), ...data });
+                showToast('تمت إضافة الكود لمكتبتك');
+            }
+
+            closeModal();
+            renderSnippets();
+            updateStats();
+        });
+
+        function deleteSnippet(id) {
+            if (confirm('هل أنت متأكد من حذف هذا الكود؟')) {
+                snippets = snippets.filter(s => s.id !== id);
+                renderSnippets();
+                updateStats();
+                showToast('تم حذف الكود');
+            }
+        }
+
+        function toggleFavorite(id) {
+            const s = snippets.find(x => x.id === id);
+            if (s) {
+                s.favorite = !s.favorite;
+                renderSnippets();
+                updateStats();
+            }
+        }
+
+        // Preview Handlers
+        function openPreview(id) {
+            const s = snippets.find(x => x.id === id);
+            if (s) {
+                currentPreviewCode = s.content;
+                document.getElementById('previewTitle').innerText = s.title;
+                document.getElementById('previewFrame').innerHTML = s.content;
+                document.getElementById('previewModal').classList.remove('hidden');
+            }
+        }
+
+        function closePreview() {
+            document.getElementById('previewModal').classList.add('hidden');
+        }
+
+        function copyCurrentPreview() {
+            copyCode(encodeURIComponent(currentPreviewCode));
+        }
+
+        // Utils
+        function copyCode(encodedContent) {
+            const content = decodeURIComponent(encodedContent);
+            const el = document.createElement('textarea');
+            el.value = content;
+            document.body.appendChild(el);
+            el.select();
+            document.execCommand('copy');
+            document.body.removeChild(el);
+            showToast('تم نسخ الكود للحافظة');
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toastMsg').innerText = msg;
+            toast.classList.remove('translate-y-20');
+            toast.classList.add('translate-y-0');
+            setTimeout(() => {
+                toast.classList.remove('translate-y-0');
+                toast.classList.add('translate-y-20');
+            }, 3000);
+        }
+
+        // Start App
+        window.onload = init;
+    </script>
+</body>
+</html>
